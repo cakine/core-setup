@@ -11,6 +11,7 @@
 runtime_config_t::runtime_config_t(const pal::string_t& path, const pal::string_t& dev_path)
     : m_patch_roll_fwd(true)
     , m_prerelease_roll_fwd(false)
+    , m_no_candidate_fx_roll_fwd(false)
     , m_path(path)
     , m_dev_path(dev_path)
     , m_portable(false)
@@ -69,6 +70,21 @@ bool runtime_config_t::parse_opts(const json_value& opts)
     if (prerelease_roll_fwd != opts_obj.end())
     {
         m_prerelease_roll_fwd = prerelease_roll_fwd->second.as_bool();
+    }
+
+    auto no_candidate_fx_roll_fwd = opts_obj.find(_X("noCandidateFxRollForward"));
+    if (no_candidate_fx_roll_fwd != opts_obj.end())
+    {
+        m_no_candidate_fx_roll_fwd = no_candidate_fx_roll_fwd->second.as_bool();
+    }
+    else
+    {
+        pal::string_t env_no_candidate;
+        if (pal::getenv(_X("DOTNET_NO_CANDIDATE_FX_ROLL_FORWARD"), &env_no_candidate))
+        {
+            auto env_val = pal::xtoi(env_no_candidate.c_str());
+            m_no_candidate_fx_roll_fwd = (env_val == 1);
+        }
     }
 
     auto tfm = opts_obj.find(_X("tfm"));
@@ -210,6 +226,12 @@ bool runtime_config_t::get_prerelease_roll_fwd() const
 {
     assert(m_valid);
     return m_prerelease_roll_fwd;
+}
+
+bool runtime_config_t::get_no_candidate_fx_roll_fwd() const
+{
+    assert(m_valid);
+    return m_no_candidate_fx_roll_fwd;
 }
 
 bool runtime_config_t::get_portable() const
